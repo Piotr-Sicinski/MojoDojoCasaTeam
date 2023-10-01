@@ -31,32 +31,28 @@ def quantum_alive(board, x, y):
             if 0 <= x + i < board.shape[0] and 0 <= y + j < board.shape[1]:
                 neighbors.append(board[x + i, y + j])
 
-    ## init circuit
-    qc = QuantumCircuit(14, 1)
+    while(len(neighbors) < 8):
+        neighbors.append(0)
+
+    qc = QuantumCircuit(11, 1)
     qc.x(0) if board[x][y] else qc.id(0)
     for i in range(1, 9):
-        qc.x(i) if board[x][y] else qc.id(i)
+        qc.x(i) if neighbors[i - 1] else qc.id(i) 
 
-    """ 
-        TODO:
-        1. Do the addition of the neighbors
-        2. Make a decision based on the result of the addition
-        3. Measure the output qubit
-    """
+    qc.h(0)
 
-    # Random stuff for the time begin
-    for i in range(1, 9):
-        qc.ccx(0, i, 9)
+    for i in range(0, 9):
+        qc.cx(i, 9)  
 
-    qc.measure(9, 0)
-    result = (
-        Aer.get_backend("qasm_simulator")
-        .run(transpile(qc, Aer.get_backend("qasm_simulator")))
-        .result()
-    )
+    for i in range(0, 9):
+        for j in range(i + 1, min(i +3, 9)):
+            qc.ccx(i, j, 10)
 
-    ones = result.get_counts().get("1", 0)
-    zeros = result.get_counts().get("0", 0)
+    qc.measure(10, 0)
+    result = Aer.get_backend('qasm_simulator').run(transpile(qc, Aer.get_backend('qasm_simulator'))).result()
 
-    return ones > zeros
+    ones = result.get_counts().get('1', 0)
+    zeros = result.get_counts().get('0', 0)
+
+    return int(ones / (ones + zeros))
 
