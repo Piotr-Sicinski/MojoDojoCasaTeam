@@ -1,5 +1,22 @@
-from qiskit import QuantumCircuit, Aer, transpile
+from qiskit import QuantumCircuit, Aer, transpile, execute
+from qiskit.tools.monitor import job_monitor
+from qiskit import IBMQ
+from dotenv import load_dotenv
+import os
 
+load_dotenv()
+API = False
+backend = backend = Aer.get_backend('qasm_simulator')
+
+if os.getenv('IBM_TOKEN') is not None:
+    IBMQ.save_account(os.getenv('IBM_TOKEN'))
+    IBMQ.load_account()
+    provider = IBMQ.get_provider('ibm-q')
+    backend = provider.get_backend('ibm_brisbane')
+    API = True
+    print("Using real quantum computer")
+else:
+    print("Using simulator")
 
 def count_neighbors(board, x, y):
     """Count the number of live neighbors around a cell."""
@@ -48,8 +65,17 @@ def quantum_alive(board, x, y):
         for j in range(i + 1, min(i +3, 9)):
             qc.ccx(i, j, 10)
 
+    qc.h(7)
+    qc.cx(7, 8)
+
     qc.measure(10, 0)
-    result = Aer.get_backend('qasm_simulator').run(transpile(qc, Aer.get_backend('qasm_simulator'))).result()
+
+    if API:
+        job = execute(qc, backend, shots=100)
+        job_monitor(job)
+        result = job.result()
+    else:
+        result = backend.run(transpile(qc, backend)).result()
 
     ones = result.get_counts().get('1', 0)
     zeros = result.get_counts().get('0', 0)

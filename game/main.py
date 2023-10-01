@@ -24,11 +24,9 @@ def evolve(board, alive_fn):
 def play(board, alive_fn, steps=10):
     """Play the Game of Life for n generations."""
     frames = [board]
-    for i in range(10):
+    for i in range(steps):
         board = evolve(board, alive_fn)
         frames.append(board)
-        print(i)
-        print(board)
 
     return frames
 
@@ -59,6 +57,6 @@ if __name__ == "__main__":
     board = initialize_board(SIZE)
     frames = play(board, digital_alive, steps=100)
     save_to_gif(frames, "digital.gif", fps=10)
-    board = initialize_board(SIZE)
-    frames = play(board, quantum_alive, steps=10)
+    qboard = initialize_board(SIZE)
+    frames = play(qboard, quantum_alive, steps=20)
     save_to_gif(frames, "quantum.gif", fps=10)
