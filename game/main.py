@@ -2,6 +2,10 @@ import numpy as np
 from utils import digital_alive, quantum_alive
 from PIL import Image
 
+SIZE = 32
+
+COLOR = [255, 0, 255]
+
 
 def initialize_board(n):
     """Initialize the Game of Life board with random states."""
@@ -24,27 +28,37 @@ def play(board, alive_fn, steps=10):
         board = evolve(board, alive_fn)
         frames.append(board)
 
-        print(board)
-        breakpoint()
+        # print(board)
+        # breakpoint()
 
     return frames
 
 
 def save_to_gif(frames, name, fps):
-    frames = [Image.fromarray(frame.astype(np.uint8)) for frame in frames]
-    frames[0].save(
+
+    images = []
+    buf = np.full((SIZE, SIZE, 3), COLOR, dtype=np.uint8)
+
+    for frame in frames:
+        frame_expanded = np.expand_dims(frame, axis=-1)
+
+        tmp = buf * frame_expanded
+        images.append(Image.fromarray(tmp.astype(np.uint8)
+                                      ).resize((512, 512), Image.NEAREST))
+
+    images[0].save(
         name,
         format="GIF",
-        append_images=frames[1:],
+        append_images=images[1:],
         save_all=True,
-        duration=len(frames) / fps,
+        duration=len(images) / fps,
         loop=0,
     )
 
 
 if __name__ == "__main__":
-    board = initialize_board(10)
-    frames = play(board, digital_alive, n=100)
+    board = initialize_board(SIZE)
+    frames = play(board, digital_alive, steps=100)
     save_to_gif(frames, "digital.gif", fps=10)
-    frames = play(board, quantum_alive, n=100)
-    save_to_gif(frames, "quantum.gif", fps=10)
+    # frames = play(board, quantum_alive, steps=100)
+    # save_to_gif(frames, "quantum.gif", fps=10)
